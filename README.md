@@ -5,11 +5,11 @@
 Author: ChungYau Chin, Gilbert Hartato, HanKiong Ngan, ZhengGang Lim
 
 - [Overview](#overview)
-- [Persona](#persona)
 - [Problem Statement](#problem-statement)
 - [Data Source (Predictor)](#data-source-predictor)
 - [Data Source (Recommender)](#data-source-recommender)
 - [Classification Model and Evaluation](#classification-model-and-evaluation)
+- [Hyperparameter Tuning](#hyperparameter-tuning)
 - [Recommender development and Evaluation](#recommender-development-and-evaluation)
 - [Cost Benefit Analysis](#cost-benefit-analysis)
 - [Assumptions and Limitations](#assumptions-and-limitations)
