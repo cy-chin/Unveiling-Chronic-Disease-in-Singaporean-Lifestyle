@@ -1,8 +1,8 @@
 <img src="http://imgur.com/1ZcRyrc.png" style="float: left; margin: 20px; height: 55px">
 
-# Project 4 - Unveiling Chronic Disease in Singaporean Lifestyle
+# DSI42 Project 4 - Unveiling Chronic Disease in Singaporean Lifestyle
 
-DSI42- Group 6: Authors: ChungYau Chin, Gilbert, Han Kiong, Zheng Gang
+Author: ChungYau Chin, Gilbert Hartato, HanKiong Ngan, ZhengGang Lim
 
 - [Overview](#overview)
 - [Persona](#persona)
@@ -26,22 +26,22 @@ We'll analyze lifestyle data, such as alcohol consumption, smoking habits, dieta
 
 After prediction, we also work on a food recommender that recommend dishes that suits the users' nutrional requirements. The food recommender is in a beta version as there are limited nutritional data available online. **Please note that the focus on the recommender is on the implementation, and all recommendations should be double confirmed by a certified medical professional before going live.**
 
-## Persona
 
-Conrius, a 30-year-old auditor at KPMG, is mindful of the health risks associated with his foodie hobby amidst his strenuous work schedule. He seek personalized guidance, not generic online information, 
-Conrius aims to assess his lifestyle's impact on potential chronic diseases. 
-He desires tailored strategies to cultivate healthier eating habits while still enjoying occasional indulgences in delicious cuisine.
-
+--- 
 ## Problem Statement
 
 In Singapore, the increasing prevalence of chronic diseases presents a pressing public health concern, underscoring the need for proactive intervention strategies. 
 How can we identify individuals at high risk for chronic diseases based on their behavioral habits? By doing so, we can enable early detection and provide recommendations, fostering a proactive approach to preventing various chronic diseases.
+
+--- 
 
 ## Data Source (Predictor)
 
 - **Source:** Data sourced from the Behavioral Risk Factor Surveillance System (BRFSS), as detailed on the [CDC's BRFSS Questionnaires page](https://www.cdc.gov/brfss/questionnaires/index.htm).
 
 We chose this dataset as the inputs are comprehensive and of a substantial volume (Combing both 2015 and 2013, we have managed to get more than 10k datapoints for our model training). It is important to note that we have only included data of people with Asian race profile to be more relevant to Singapore. 
+
+--- 
 
 ## Data Source (Recommender)
 
@@ -61,57 +61,77 @@ The categories and recommended nutrition food profiles are derived from the belo
 The nutritional profile of the dishes are labelled into their cuisine types manually, and the nutrition values can either be found in the below link in [ObservableHQ - SG Hawker Food Nutrition](https://observablehq.com/@yizhe-ang/sg-hawker-food-nutrition) or manually scrapped as per `01_Data_Collection.ipynb` from [HPB website](https://focos.hpb.gov.sg/eservices/ENCF/)
 
 
+--- 
+
 ### Classification Model and Evaluation
+A binary classification model will be developed and trained, so that we can use it for chronic disease prediction based on one's lifestyle input. 5 models were considered in the model evaluation. 
+
+| Classifier                   | Interpretability | Performance | Recommendations                                                                                                                                                                  |
+|------------------------------|------------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Logistic Regression          | High             | Moderate    | Suitable for linearly separable data, easy to interpret coefficients, works well with small to medium-sized datasets.                                                  |
+| Random Forest                | Moderate         | High        | Combines multiple decision trees to reduce overfitting, robust to noise and outliers, suitable for large datasets with high dimensionality.                            |
+| Support Vector Machines (SVM)| Low              | High        | Effective in high-dimensional spaces, versatile due to different kernel functions, can be memory intensive, suitable for small to medium-sized datasets.            |
+| Gradient Boosting Machines (GBM)| Low           | High        | Ensemble method that combines weak learners to improve accuracy, less interpretable due to complexity, suitable for various types of data.                            |
+| XGBoost                      | Low              | High        | Optimized implementation of gradient boosting, often outperforms other algorithms, less interpretable but highly accurate, suitable for large datasets.               |
+
+
+Before the model creation, we also applied a few tools or techniques to do data preprocessing, feature engineering and dimensionality reduction as follows: 
+
+1. Class Balancing: 
+- `RandomUnderSampler` aims to balance the class distribution by randomly selecting a subset of instances from the majority class (or classes) such that the resulting dataset is more balanced. The idea is to reduce the number of instances in the majority class to match the number of instances in the minority class, thus creating a more balanced dataset for training the model.
+- `ADASYN` algorithm aims to balance the class distribution by generating synthetic samples for the minority class (class 1 in your case). However, it doesn't guarantee an exact balance between the classes after resampling. The imbalance might still exist due to the nature of the algorithm and the distribution of instances in the feature space.
+2. PolynomialFeatures: `PolynomialFeatures` is a preprocessing module that generates polynomial features from the original features useful for capturing non-linear relationships between features. For example, if you have a feature x, PolynomialFeatures can create new features like x^2, x^3, etc.
+3. StandardScaler: `StandardScaler` is a preprocessing technique used to standardize features by removing the mean and scaling to unit variance. We apply to numerical features to ensure that they have a mean of 0 and a standard deviation of 1. This is important for many machine learning algorithms that assume data is centered and has a consistent scale.
+4. Principal Component Analysis: `PCA` is a dimensionality reduction technique used to reduce the number of features in a dataset while preserving most of the information. It does this by transforming the original features into a new set of orthogonal (uncorrelated) features called principal components. These principal components are ordered by the amount of variance they explain in the data, allowing you to select a subset of components to represent the data more efficiently.
+
+To create the classification models, we will do the following:
+1. Define X and y
+2. Create a train-test split of X and y
+3. Create a pipeline for the RandomUnderSampler/ ADASYN, PolynomialFeatures, StandardScaler, PCA (with identified n_components) and the classifiers<br>
+4. Call and fit the respective classification models
+5. Generate scoring metrics (accuracy, precision, recall, F1 score) to see how well the baseline model is performing
+
+The results from the model evaluation is summarized in this table. 
+![model_eval_result](./Images/model_eval_result.png)
+
+Based on our problem statement, the task is to identify individuals at high risk for chronic diseases based on their lifestyle data. The significance of the evaluation metrics are as follows: 
+- Accuracy: measures the proportion of correctly classified instances among all instances. In this context, accuracy indicates how well the model predicts both high-risk and not high-risk individuals. 
+- Precision: measures the proportion of true high-risk individuals among all instances classified as high-risk. It focuses on minimizing false positives, i.e., instances wrongly classified as high-risk individuals. In this context, precision indicates the reliability of the model in correctly identifying high-risk individuals.
+- Recall/ Sensitivity: measures the proportion of true high-risk individuals that are correctly identified by the classifier. It focuses on minimizing false negatives, i.e., high-risk individuals wrongly classified as not high-risk. In this context, recall indicates the ability of the model to capture all actual high-risk individuals.
+- F1 Score: harmonic mean of precision and recall. It provides a balance between precision and recall, giving equal weight to both metrics. It summarizes the overall performance of the classifier, taking into account both precision and recall.
+
+The team has chosen F1 score to be the main metric to focus. As a result, Logistic Regression and Support Vector Classifiction are chosen to move forward for Hyperparameter Tuning. 
+
+
+--- 
+### Hyperparameter Tuning
 
 We have attempted to hypertuned two models:
 1. Logistic Regression
 2. Support Vector Classification
 
-
-With our scores as follow: 
-
-F1 Scores:
-
-| Model                   | Train Score | Test Score | Difference  |
-|-------------------------|-------------|------------|-------------|
-| Logistic Regression     | 0.601251    | 0.607221   | -0.005970   |
-| Support Vector Classifier | 0.595136    | 0.597097   | -0.001961   |
-
-Accuracy: 
-
-| Model                   | Train Score | Test Score | Difference  |
-|-------------------------|-------------|------------|-------------|
-| Logistic Regression     | 0.718       | 0.719652   | -0.001652   |
-| Support Vector Classifier | 0.683381    | 0.681155   | 0.002226    |
-
-Recall (Sensitivity):
-
-| Model                   | Train Score | Test Score | Difference  |
-|-------------------------|-------------|------------|-------------|
-| Logistic Regression     | 0.625628    | 0.637443   | -0.011815   |
-| Support Vector Classifier | 0.684788    | 0.694977   | -0.010189   |
-
-Precision: 
-
-| Model                   | Train Score | Test Score | Difference  |
-|-------------------------|-------------|------------|-------------|
-| Logistic Regression     | 0.578703    | 0.579734   | -0.001031   |
-| Support Vector Classifier | 0.526242    | 0.523384   | 0.002858    |
-
+![Hyperparameter-Tune Result](./Images/hyperparameter_tune_result.png)
 
 Both of the hyperturned models do not show significant improvement from the baseline model. However, we see that the hypertuned models performed better in term of generalization as the gap between train and test scores are reduced. We chose Logistic Regression in the end due to the higher F1 and accuracy. 
 
 We then did an analysis on items were classified wrongly by our model. They were mainly old age people with high blood pressure and high cholesterol, while they are not diagnosed with any chronic disease in our datasets, it makes empirical sense that these should be highlighted as high risk by our model. The next notebook will be with regards to the implementation of our recommendation model and this notebook will conclude the part on modelling. 
 
+--- 
+
 ### Recommender development and Evaluation
 
 The team developed a content-based recommender system for dietary planning, currently in beta for our Streamlit showcase. This system is designed to offer meal suggestions tailored to users' dietary needs and health profiles. It operates by analyzing user input regarding health conditions, activity levels, and dietary preferences to suggest meals that align with their nutritional requirements.
+
+![Recommender](./Images/recommender.png)
+![Recommender2](./Images/recommender2.png)
 
 We observed several shortcoming for our recommender as per below: 
   - Overlap in meal suggestions across different profiles.
   - Recommendations could better match individual health and dietary specifics.
 
 The Streamlit app can be accessible from this URL - https://healthapp-chroniscope-demo.streamlit.app/
+
+--- 
 
 ### Cost Benefit Analysis
 
@@ -160,6 +180,8 @@ We also did a projection for our app as per below:
 **Remarks**
 - Aggressive with costs, conservative with benefits to avoid unnecessary commitment of resources.
 
+--- 
+
 ## Assumptions and Limitations
 
 There are limitations to both of our classifier and recommender.
@@ -170,12 +192,15 @@ For classifier, we achieved an accuracy score of 72% for test results. While thi
 
 For our recommender, we managed to prove the implementation but we are definitely no food scientist and the topic is more complex than that. It is important to note that we made the assumption that the caloric requirements is split evenly across three meals in a day and also the recommendation provided covers the entire meal for a person without additional side dishes or drinks. We will also highlight again that our recommender is in a beta stage and it should not be used to provide any definitive recommendations apart from the showcase. 
 
+---
+
 ## Conclusion
 
 All in all, the team has managed to develop a classifier and a proof of concept for the recommendation. There are clear next steps that will help to improve the classifer and the recommender such as:
 1. Gathering of more granular and specific nutritional data for dish for recommenders' evaluation.
 2. Obtaining the Singapore health survey data that will make the context more localized.  
 
+--- 
 
 ### Appendix: Data Dictionary
 
